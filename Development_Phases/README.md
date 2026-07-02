@@ -1,3 +1,11 @@
+---
+title: CareerOS AI
+emoji: 🚀
+colorFrom: blue
+colorTo: purple
+sdk: docker
+pinned: false
+---
 # 🚀 CareerOS AI — Development Phases Index
 
 > **AI-Powered Career & Productivity Management Platform**
