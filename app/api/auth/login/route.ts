@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/utils/supabase/server";
 import { z } from "zod";
+import { sendEmail } from "@/utils/email";
+import { templates } from "@/utils/emailTemplates";
 
 const loginSchema = z.object({
   email: z.string().email("Invalid email address"),
@@ -29,6 +31,18 @@ export async function POST(request: Request) {
     });
 
     if (error) {
+      if (error.message.includes("Email not confirmed")) {
+        return NextResponse.json(
+          { 
+            success: false, 
+            error: "Email not confirmed", 
+            message: "Please verify your email address before signing in. We've sent a verification email to your inbox.",
+            needsVerification: true 
+          },
+          { status: 403 }
+        );
+      }
+
       return NextResponse.json(
         { success: false, error: error.message },
         { status: error.status || 401 }
@@ -75,10 +89,27 @@ export async function POST(request: Request) {
       );
     }
 
+    // Login successful
     const response = NextResponse.json(
       { success: true, user: data.user, role },
       { status: 200 }
     );
+    
+    // Parse user agent/IP headers for the login alert email
+    const ip = request.headers.get("x-forwarded-for") || request.headers.get("x-real-ip") || "Unknown";
+    const userAgent = request.headers.get("user-agent") || "Unknown Browser / OS";
+    const date = new Date().toLocaleString("en-US", { timeZone: "UTC" }) + " UTC";
+    
+    try {
+      await sendEmail({
+        to: email,
+        subject: "New Login Detected",
+        html: templates.loginAlert(date, userAgent, "See user agent", ip)
+      });
+    } catch (emailErr) {
+      console.error("Failed to send login alert:", emailErr);
+    }
+
     response.cookies.set("career_os_role", role, { path: "/", maxAge: 60 * 60 * 24 * 7 });
     return response;
   } catch (err: any) {

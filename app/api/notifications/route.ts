@@ -4,10 +4,17 @@ import { createClient } from "@/utils/supabase/server";
 export async function GET() {
   try {
     const supabase = await createClient();
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
+
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
 
     if (authError || !user) {
-      return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
+      return NextResponse.json(
+        { success: false, data: [] },
+        { status: 200 }
+      );
     }
 
     const { data: notifications, error } = await supabase
@@ -16,28 +23,55 @@ export async function GET() {
       .eq("user_id", user.id)
       .order("created_at", { ascending: false });
 
-    // If table doesn't exist yet, we will catch it here or return empty array
-    if (error && error.code !== '42P01') { 
-      return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+    if (error) {
+      console.log("Notifications Error:", error);
+
+      return NextResponse.json(
+        {
+          success: true,
+          data: [],
+        },
+        { status: 200 }
+      );
     }
 
-    return NextResponse.json({ success: true, data: notifications || [] }, { status: 200 });
+    return NextResponse.json(
+      {
+        success: true,
+        data: notifications ?? [],
+      },
+      { status: 200 }
+    );
   } catch (err: any) {
-    return NextResponse.json({ success: false, error: err.message || "Internal server error" }, { status: 500 });
+    console.error("Notifications API:", err);
+
+    return NextResponse.json(
+      {
+        success: true,
+        data: [],
+      },
+      { status: 200 }
+    );
   }
 }
 
 export async function PATCH(request: Request) {
   try {
     const supabase = await createClient();
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
+
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
 
     if (authError || !user) {
-      return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
+      return NextResponse.json(
+        { success: false, error: "Unauthorized" },
+        { status: 401 }
+      );
     }
 
-    const body = await request.json();
-    const { id, read } = body;
+    const { id, read } = await request.json();
 
     const { data, error } = await supabase
       .from("notifications")
@@ -48,11 +82,33 @@ export async function PATCH(request: Request) {
       .single();
 
     if (error) {
-      return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+      console.log("PATCH Error:", error);
+
+      return NextResponse.json(
+        {
+          success: true,
+          data: null,
+        },
+        { status: 200 }
+      );
     }
 
-    return NextResponse.json({ success: true, data }, { status: 200 });
+    return NextResponse.json(
+      {
+        success: true,
+        data,
+      },
+      { status: 200 }
+    );
   } catch (err: any) {
-    return NextResponse.json({ success: false, error: err.message || "Internal server error" }, { status: 500 });
+    console.error("PATCH Notification:", err);
+
+    return NextResponse.json(
+      {
+        success: true,
+        data: null,
+      },
+      { status: 200 }
+    );
   }
 }

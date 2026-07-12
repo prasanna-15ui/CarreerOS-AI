@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/utils/supabase/server";
 import { z } from "zod";
+import { sendEmail } from "@/utils/email";
+import { templates } from "@/utils/emailTemplates";
 
 const signupSchema = z.object({
   email: z.string().email("Invalid email address"),
@@ -34,13 +36,23 @@ export async function POST(request: Request) {
       );
     }
 
+    // Supabase will automatically send the verification email if 'Confirm email' is enabled in the dashboard.
+
     return NextResponse.json(
       { success: true, user: data.user },
       { status: 201 }
     );
   } catch (err: any) {
+    console.error("Signup error details:", err);
+    
+    // Check if the error is a fetch timeout/connection issue
+    let errorMessage = err.message || "Internal server error";
+    if (errorMessage.includes("fetch failed") || errorMessage.includes("timeout") || errorMessage.includes("ECONNREFUSED")) {
+      errorMessage = "Authentication server is unreachable or timed out. (This can happen if Supabase SMTP is misconfigured or blocked).";
+    }
+    
     return NextResponse.json(
-      { success: false, error: err.message || "Internal server error" },
+      { success: false, error: errorMessage },
       { status: 500 }
     );
   }

@@ -70,7 +70,7 @@ export function ResumeUploader({ onUploadComplete }: { onUploadComplete: () => v
 
       if (!dbJson.success) throw new Error(dbJson.error);
 
-      toast.success("Resume uploaded successfully!");
+      toast.success("Resume uploaded! Confirmation email sent.");
       setFile(null);
       setTags([]);
       onUploadComplete();

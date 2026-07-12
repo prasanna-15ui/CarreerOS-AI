@@ -44,12 +44,12 @@ export default function SignupPage() {
       });
 
       const result = await response.json();
-
+      
       if (!response.ok) {
         toast.error(result.error || "Failed to create account");
       } else {
-        toast.success("Account created successfully!");
-        router.push("/dashboard");
+        toast.success("Account created! Please check your email to verify your account.");
+        router.push("/login");
         router.refresh();
       }
     } catch (err: any) {

@@ -45,7 +45,7 @@ export default function PlacementsPage() {
       });
       const json = await res.json();
       if (json.success) {
-        toast.success("Application added!");
+        toast.success("Application added! Notification email sent.");
         fetchPlacements();
       } else {
         toast.error(json.error || "Failed to add application");
@@ -64,7 +64,7 @@ export default function PlacementsPage() {
       });
       const json = await res.json();
       if (json.success) {
-        toast.success("Status updated!");
+        toast.success("Status updated! Notification email sent.");
         fetchPlacements();
       } else {
         toast.error(json.error || "Failed to update status");

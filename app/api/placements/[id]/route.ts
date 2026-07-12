@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/utils/supabase/server";
 import { z } from "zod";
+import { sendEmail } from "@/utils/email";
+import { templates } from "@/utils/emailTemplates";
 
 const placementSchema = z.object({
   company_name: z.string().min(1).optional(),
@@ -36,6 +38,8 @@ export async function PATCH(request: Request, context: any) {
     const roleCookie = request.headers.get("cookie")?.includes("career_os_role=admin");
     const isAdmin = roleCookie || profile?.role === "admin";
 
+    const { data: oldData } = await supabase.from("companies").select("status, company_name, role").eq("id", id).single();
+
     let query = supabase.from("companies").update(result.data).eq("id", id);
     if (!isAdmin) {
       query = query.eq("user_id", user.id);
@@ -45,6 +49,23 @@ export async function PATCH(request: Request, context: any) {
 
     if (error) {
       return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+    }
+
+    if (result.data.status && oldData && oldData.status !== result.data.status) {
+      try {
+        await sendEmail({
+          to: user.email as string,
+          subject: "Placement Status Updated",
+          html: templates.placementStatusChanged(
+            data.company_name || oldData.company_name || "Company",
+            data.role || oldData.role || "Role",
+            oldData.status || "Unknown",
+            result.data.status
+          )
+        });
+      } catch (emailErr) {
+        console.error("Failed to send placement status email:", emailErr);
+      }
     }
 
     return NextResponse.json({ success: true, data }, { status: 200 });

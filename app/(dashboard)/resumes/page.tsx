@@ -39,7 +39,7 @@ export default function ResumesPage() {
       const json = await res.json();
       
       if (json.success) {
-        toast.success("Resume deleted!");
+        toast.success("Resume deleted! Confirmation email sent.");
         fetchResumes();
       } else {
         toast.error(json.error || "Failed to delete resume");

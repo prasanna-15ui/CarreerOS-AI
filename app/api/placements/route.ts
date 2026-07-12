@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/utils/supabase/server";
 import { z } from "zod";
+import { sendEmail } from "@/utils/email";
+import { templates } from "@/utils/emailTemplates";
 
 const placementSchema = z.object({
   company_name: z.string().min(1, "Company name is required"),
@@ -65,6 +67,20 @@ export async function POST(request: Request) {
 
     if (error) {
       return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+    }
+
+    try {
+      await sendEmail({
+        to: user.email as string,
+        subject: "Application Submitted Successfully",
+        html: templates.placementApplied(
+          result.data.company_name, 
+          result.data.role, 
+          result.data.applied_date || new Date().toLocaleDateString()
+        )
+      });
+    } catch (emailErr) {
+      console.error("Failed to send placement email:", emailErr);
     }
 
     return NextResponse.json({ success: true, data }, { status: 201 });

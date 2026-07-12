@@ -42,3 +42,28 @@ You can check out [the Next.js GitHub repository](https://github.com/vercel/next
 The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
 
 Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+
+## Email Notification Setup
+
+CareerOS AI is equipped with an automated email notification system built on **Resend**. It handles:
+- Welcome emails on Signup
+- Security alerts on Login
+- Upload/Delete confirmations for Resumes
+- Application submission and status updates
+- Task and Goal completion celebrations
+- Weekly Progress Reports
+
+### Configuration
+
+To enable the email system, add the following environment variables to your `.env.local` file:
+
+```env
+# Email configuration
+RESEND_API_KEY=your_resend_api_key_here
+EMAIL_FROM="CareerOS AI <onboarding@resend.dev>" # Change to your verified domain in production
+
+# Cron secret for Weekly Reports (Optional but recommended)
+CRON_SECRET=your_secure_random_string
+```
+
+If `RESEND_API_KEY` is not provided, the application will silently fallback and log the email attempt to the console to avoid disrupting the user experience.

@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/utils/supabase/server";
+import { sendEmail } from "@/utils/email";
+import { templates } from "@/utils/emailTemplates";
 
 export async function DELETE(request: Request, context: any) {
   try {
@@ -40,6 +42,16 @@ export async function DELETE(request: Request, context: any) {
 
     if (error) {
       return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+    }
+
+    try {
+      await sendEmail({
+        to: user.email as string,
+        subject: "Resume Deleted Successfully",
+        html: templates.resumeDeleted()
+      });
+    } catch (emailErr) {
+      console.error("Failed to send resume delete email:", emailErr);
     }
 
     return NextResponse.json({ success: true, message: "Resume deleted successfully" }, { status: 200 });

@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/utils/supabase/server";
 import { z } from "zod";
+import { sendEmail } from "@/utils/email";
+import { templates } from "@/utils/emailTemplates";
 
 const taskSchema = z.object({
   title: z.string().min(1).optional(),
@@ -45,6 +47,18 @@ export async function PATCH(request: Request, context: any) {
 
     if (error) {
       return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+    }
+
+    if (result.data.status === "Completed") {
+      try {
+        await sendEmail({
+          to: user.email as string,
+          subject: "Task Completed Successfully",
+          html: templates.taskCompleted(data.title || "Task", new Date().toLocaleString())
+        });
+      } catch (emailErr) {
+        console.error("Failed to send task email:", emailErr);
+      }
     }
 
     return NextResponse.json({ success: true, data }, { status: 200 });

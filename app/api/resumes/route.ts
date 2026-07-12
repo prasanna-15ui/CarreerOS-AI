@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/utils/supabase/server";
 import { z } from "zod";
+import { sendEmail } from "@/utils/email";
+import { templates } from "@/utils/emailTemplates";
 
 const resumeSchema = z.object({
   file_name: z.string().min(1, "File name is required"),
@@ -63,6 +65,16 @@ export async function POST(request: Request) {
 
     if (error) {
       return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+    }
+
+    try {
+      await sendEmail({
+        to: user.email as string,
+        subject: "Resume Uploaded Successfully",
+        html: templates.resumeUploaded(result.data.file_name, new Date().toLocaleString(), result.data.tags?.join(", "))
+      });
+    } catch (emailErr) {
+      console.error("Failed to send resume upload email:", emailErr);
     }
 
     return NextResponse.json({ success: true, data }, { status: 201 });
